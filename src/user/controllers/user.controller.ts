@@ -11,13 +11,13 @@ export class UserController {
     private readonly authService: AuthService,
   ) {}
 
-  @Post('signup')
+  @Post('sign-up')
   async createUser(@Body() createUserDto: CreateUserDto) {
-    return this.userService.createUser(createUserDto);
+    return await this.userService.createUser(createUserDto);
   }
 
-  @Post('signin')
+  @Post('sign-in')
   async signIn(@Body() signInUserDto: SignInUserDto) {
-    return this.authService.login(signInUserDto);
+    return await this.authService.login(signInUserDto);
   }
 }

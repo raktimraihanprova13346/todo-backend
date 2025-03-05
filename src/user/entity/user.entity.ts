@@ -1,11 +1,14 @@
 import {
   Column,
   CreateDateColumn,
+  DataSource,
   Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { IsEmail, Length, Matches } from 'class-validator';
+import { IsUnique } from '../../decorator/isUnique.decorator';
+import { AppDataSource } from '../../data-source/data.source';
 
 @Entity()
 export class User {
@@ -21,9 +24,10 @@ export class User {
   @UpdateDateColumn()
   updateDate: Date;
 
-  //username length is between 3 and 100 character
-  @Column({ length: 100 })
+  //username length is between 3 and 100 characters
+  @Column({ length: 100, unique: true })
   @Length(3, 100)
+  @IsUnique(User, 'userName', AppDataSource, {})
   userName: string;
 
   //email address should have to be unique
@@ -31,6 +35,7 @@ export class User {
   @Column({ length: 255, unique: true })
   @IsEmail()
   @Length(3, 255)
+  @IsUnique(User, 'emailAddress', AppDataSource, {})
   emailAddress: string;
 
   //(?=.*[A-Za-z]) = matches at least one english character
