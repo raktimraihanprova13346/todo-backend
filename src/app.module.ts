@@ -20,6 +20,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       database: 'todo_management',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
+      logging: true,
     }),
   ],
   controllers: [AppController],

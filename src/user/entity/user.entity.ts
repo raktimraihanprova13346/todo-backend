@@ -1,14 +1,16 @@
 import {
   Column,
   CreateDateColumn,
-  DataSource,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { IsEmail, Length, Matches } from 'class-validator';
 import { IsUnique } from '../../decorator/isUnique.decorator';
 import { AppDataSource } from '../../data-source/data.source';
+import { Tag } from '../../tag/entity/tag.entity';
+import { ToDo } from '../../todo/entity/todo.entity';
 
 @Entity()
 export class User {
@@ -48,4 +50,10 @@ export class User {
       'Password must have minimum 8 characters and include at least two of the following: letters, numbers, or symbols.',
   })
   password: string;
+
+  @OneToMany(() => Tag, (tag) => tag.user, { cascade: true })
+  tags: Tag[];
+
+  @OneToMany(() => ToDo, (todo) => todo.user, { cascade: true })
+  todos: ToDo[];
 }
