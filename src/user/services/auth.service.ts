@@ -30,7 +30,11 @@ export class AuthService {
     } else {
       const payload = { email: userData.emailAddress, sub: userData.id };
       return {
-        access_token: this.jwtService.sign(payload),
+        username: userData.userName,
+        email: userData.emailAddress,
+        updatedDate: userData.updateDate,
+        createdDate: userData.creationDate,
+        accessToken: this.jwtService.sign(payload),
       };
     }
   }

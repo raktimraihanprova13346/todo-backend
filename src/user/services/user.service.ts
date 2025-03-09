@@ -14,13 +14,31 @@ export class UserService {
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     const user = this.userRepository.create(createUserDto);
-
     //save user password as hash
+    user.emailAddress = createUserDto.email.trim();
+    user.userName = createUserDto.username.trim();
     user.password = await bcrypt.hash(createUserDto.password, 10);
+
+    await this.userRepository
+      .findOne({ where: { emailAddress: user.emailAddress } })
+      .then((user) => {
+        if (user) {
+          throw new BadRequestException('User Already Exists with this email.');
+        }
+      });
+
+    await this.userRepository
+      .findOne({ where: { userName: user.userName } })
+      .then((user) => {
+        if (user) {
+          throw new BadRequestException('This username is already taken.');
+        }
+      });
+
     try {
       return await this.userRepository.save(user);
-    } catch (error) {
-      throw new BadRequestException('User Already Exists or Invalid Data');
+    } catch (Error) {
+      throw new BadRequestException('Invalid Data. Please try again.');
     }
   }
 

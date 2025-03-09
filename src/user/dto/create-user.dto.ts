@@ -13,7 +13,7 @@ export class CreateUserDto extends OmitType(User, [
 
   @IsString()
   @Length(1, 100)
-  userName: string;
+  username: string;
 
   @IsString()
   @Matches(/^(?=.*[A-Za-z])(?=.*\d|.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
