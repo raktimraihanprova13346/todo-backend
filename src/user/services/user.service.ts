@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../entity/user.entity';
 import { Repository } from 'typeorm';
@@ -23,7 +27,7 @@ export class UserService {
       .findOne({ where: { emailAddress: user.emailAddress } })
       .then((user) => {
         if (user) {
-          throw new BadRequestException('User Already Exists with this email.');
+          throw new ConflictException('User Already Exists with this email.');
         }
       });
 
@@ -31,7 +35,7 @@ export class UserService {
       .findOne({ where: { userName: user.userName } })
       .then((user) => {
         if (user) {
-          throw new BadRequestException('This username is already taken.');
+          throw new ConflictException('This username is already taken.');
         }
       });
 
@@ -42,9 +46,16 @@ export class UserService {
     }
   }
 
-  async findUserByEmail(signInUserDto: SignInUserDto): Promise<User | null> {
+  async findUserByEmailAndPass(
+    signInUserDto: SignInUserDto,
+  ): Promise<User | null> {
     return this.userRepository.findOne({
       where: { emailAddress: signInUserDto.email },
+    });
+  }
+  async findUserByEmail(email: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { emailAddress: email },
     });
   }
 }
