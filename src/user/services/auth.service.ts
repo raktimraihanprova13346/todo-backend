@@ -7,7 +7,6 @@ import { User } from '../entity/user.entity';
 
 @Injectable()
 export class AuthService {
-
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
