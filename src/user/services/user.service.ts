@@ -16,6 +16,7 @@ import { Tag } from '../../tag/entity/tag.entity';
 import { ToDo } from '../../todo/entity/todo.entity';
 import { PaginatedTagResponseDto } from '../dto/paginated-tag-response.dto';
 import { PaginatedTodoReqDto } from '../dto/paginated-todo.req.dto';
+import { PaginatedTodoRespDto } from '../dto/paginated-todo-resp.dto';
 
 @Injectable()
 export class UserService {
@@ -97,7 +98,7 @@ export class UserService {
       page: paginatedTagDto.pageNumber,
       totalPages: totalPages,
     };
-    return Promise.resolve(paginatedTagResponseDto);
+    return paginatedTagResponseDto;
   }
 
   async findTagsOfUser(email: string): Promise<Tag[]> {
@@ -113,12 +114,12 @@ export class UserService {
       where: { emailAddress: email },
       relations: ['todos'],
     });
-    return Promise.resolve(user?.todos || []);
+    return user?.todos || [];
   }
 
   async findPaginatedTodoByUser(
     paginatedTodoReq: PaginatedTodoReqDto,
-  ): Promise<ToDo[]> {
+  ): Promise<PaginatedTodoRespDto> {
     const user: User | null = await this.userRepository.findOne({
       where: { emailAddress: paginatedTodoReq.emailAddress },
       relations: ['todos', 'todos.tags'],
@@ -131,28 +132,34 @@ export class UserService {
     let filteredTodo: ToDo[] = user.todos || [];
 
     if (paginatedTodoReq.status) {
-      filteredTodo = filteredTodo.filter(todo => todo.status === paginatedTodoReq.status);
+      filteredTodo = filteredTodo.filter(
+        (todo) => todo.status === paginatedTodoReq.status,
+      );
     }
 
-    if (paginatedTodoReq.tagID.length > 0){
-      filteredTodo = filteredTodo.filter(todo => todo.tags.every(tag) => paginatedTodoReq.tagID.includes(tag))
+    if (paginatedTodoReq.tagID.length > 0) {
+      filteredTodo = filteredTodo.filter((todo: ToDo) =>
+        todo.tags.every((tag: Tag) => paginatedTodoReq.tagID.includes(tag.id)),
+      );
     }
-    if(paginatedTodoReq.tagID)
-
-
-
-    if(!user) {}
 
     const skip: number =
       (paginatedTodoReq.pageNumber - 1) * paginatedTodoReq.itemsPerPage;
     const todos: ToDo[] =
-      user?.todos.slice(skip, skip + paginatedTodoReq.itemsPerPage) || [];
+      filteredTodo.slice(skip, skip + paginatedTodoReq.itemsPerPage) || [];
     const hasNextPage: boolean =
-      (user?.todos?.length || 0) > skip + paginatedTodoReq.itemsPerPage;
+      (filteredTodo?.length || 0) > skip + paginatedTodoReq.itemsPerPage;
     const totalPages: number = Math.ceil(
-      (user?.tags?.length || 0) / paginatedTodoReq.itemsPerPage || 0,
+      (filteredTodo?.length || 0) / paginatedTodoReq.itemsPerPage || 0,
     );
 
-    return Promise.resolve([]);
+    const paginatedTodoResp: PaginatedTodoRespDto = {
+      todos: todos,
+      hasNextPage: hasNextPage,
+      totalPage: totalPages,
+      page: paginatedTodoReq.pageNumber,
+    };
+
+    return paginatedTodoResp;
   }
 }
