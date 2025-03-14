@@ -7,14 +7,13 @@ import { AuthService } from './services/auth.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entity/user.entity';
 import { JwtStrategy } from './services/jwt.strategy';
-import { TagModule } from '../tag/tag.module';
 
 @Module({
   imports: [
     PassportModule,
     JwtModule.register({
       secret: 'secretKey',
-      signOptions: { expiresIn: '120s' },
+      signOptions: { expiresIn: '24h' },
     }),
     TypeOrmModule.forFeature([User]),
   ],

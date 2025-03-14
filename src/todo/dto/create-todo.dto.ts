@@ -11,8 +11,6 @@ export class CreateTodoDto {
   @IsNotEmpty()
   deadLine: Date;
 
-  completedDate: Date;
-
   @IsNotEmpty()
   tagID: number[] = [];
 
