@@ -11,8 +11,8 @@ import { Tag } from '../entity/tag.entity';
 import { Repository } from 'typeorm';
 import { User } from '../../user/entity/user.entity';
 import { UserService } from '../../user/services/user.service';
-import { PaginatedTagReqDto } from '../dto/paginatedTagReq.dto';
-import { PaginatedTagResponseDto } from '../dto/paginatedTagResponse.dto';
+import { PaginatedTagReqDto } from '../../user/dto/paginated-tag-req.dto';
+import { PaginatedTagResponseDto } from '../../user/dto/paginated-tag-response.dto';
 
 @Injectable()
 export class TagsService {
@@ -62,7 +62,7 @@ export class TagsService {
     }
 
     const { tags, hasNextPage, totalPages } =
-      await this.userService.findTagsByPagination(paginatedTagReqDto);
+      await this.userService.findPaginatedTagsByUser(paginatedTagReqDto);
 
     if (totalPages < paginatedTagReqDto.pageNumber) {
       throw new NotFoundException('Page does not exist.');

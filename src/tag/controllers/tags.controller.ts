@@ -1,7 +1,7 @@
 import { Body, Controller, Post, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
 import { TagsService } from '../services/tags.service';
 import { CreateTagDto } from '../dto/createTag.dto';
-import { PaginatedTagReqDto } from '../dto/paginatedTagReq.dto';
+import { PaginatedTagReqDto } from '../../user/dto/paginated-tag-req.dto';
 import { JWTAuthGuard } from '../../user/services/auth.guard';
 import { JwtPayload } from '../../user/services/jwt.strategy';
 

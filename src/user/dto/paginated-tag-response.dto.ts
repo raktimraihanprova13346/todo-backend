@@ -1,4 +1,4 @@
-import { Tag } from '../entity/tag.entity';
+import { Tag } from '../../tag/entity/tag.entity';
 
 export class PaginatedTagResponseDto {
   tags: Tag[] = [];

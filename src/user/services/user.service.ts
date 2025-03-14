@@ -11,8 +11,11 @@ import { Repository } from 'typeorm';
 import { CreateUserDto } from '../dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { SignInUserDto } from '../dto/signin-user.dto';
-import { PaginatedTagReqDto } from '../../tag/dto/paginatedTagReq.dto';
+import { PaginatedTagReqDto } from '../dto/paginated-tag-req.dto';
 import { Tag } from '../../tag/entity/tag.entity';
+import { ToDo } from '../../todo/entity/todo.entity';
+import { PaginatedTagResponseDto } from '../dto/paginated-tag-response.dto';
+import { PaginatedTodoReqDto } from '../dto/paginated-todo.req.dto';
 
 @Injectable()
 export class UserService {
@@ -21,7 +24,7 @@ export class UserService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ) {}
 
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
+  async createUser(createUserDto: CreateUserDto): Promise<string> {
     const user = this.userRepository.create(createUserDto);
     //save user password as hash
     user.emailAddress = createUserDto.email.trim();
@@ -45,7 +48,8 @@ export class UserService {
       });
 
     try {
-      return await this.userRepository.save(user);
+      await this.userRepository.save(user);
+      return Promise.resolve('User Created Successfully');
     } catch (error) {
       this.logger.error(error);
       throw new BadRequestException('Invalid Data. Please try again.');
@@ -59,6 +63,7 @@ export class UserService {
       where: { emailAddress: signInUserDto.email },
     });
   }
+
   async findUserByEmail(email: string): Promise<User> {
     const user: User | null = await this.userRepository.findOne({
       where: { emailAddress: email },
@@ -69,9 +74,9 @@ export class UserService {
     return user;
   }
 
-  async findTagsByPagination(
+  async findPaginatedTagsByUser(
     paginatedTagDto: PaginatedTagReqDto,
-  ): Promise<{ tags: Tag[]; hasNextPage: boolean; totalPages: number }> {
+  ): Promise<PaginatedTagResponseDto> {
     const result: User | null = await this.userRepository.findOne({
       where: { emailAddress: paginatedTagDto.emailAddress },
       relations: ['tags'],
@@ -86,6 +91,68 @@ export class UserService {
       (result?.tags?.length || 0) / paginatedTagDto.itemsPerPage || 0,
     );
 
-    return { tags, hasNextPage, totalPages };
+    const paginatedTagResponseDto: PaginatedTagResponseDto = {
+      tags: tags,
+      hasNextPage: hasNextPage,
+      page: paginatedTagDto.pageNumber,
+      totalPages: totalPages,
+    };
+    return Promise.resolve(paginatedTagResponseDto);
+  }
+
+  async findTagsOfUser(email: string): Promise<Tag[]> {
+    const user: User | null = await this.userRepository.findOne({
+      where: { emailAddress: email },
+      relations: ['tags'],
+    });
+    return user?.tags || [];
+  }
+
+  async findTodoByUser(email: string): Promise<ToDo[]> {
+    const user: User | null = await this.userRepository.findOne({
+      where: { emailAddress: email },
+      relations: ['todos'],
+    });
+    return Promise.resolve(user?.todos || []);
+  }
+
+  async findPaginatedTodoByUser(
+    paginatedTodoReq: PaginatedTodoReqDto,
+  ): Promise<ToDo[]> {
+    const user: User | null = await this.userRepository.findOne({
+      where: { emailAddress: paginatedTodoReq.emailAddress },
+      relations: ['todos', 'todos.tags'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('Data not found.');
+    }
+
+    let filteredTodo: ToDo[] = user.todos || [];
+
+    if (paginatedTodoReq.status) {
+      filteredTodo = filteredTodo.filter(todo => todo.status === paginatedTodoReq.status);
+    }
+
+    if (paginatedTodoReq.tagID.length > 0){
+      filteredTodo = filteredTodo.filter(todo => todo.tags.every(tag) => paginatedTodoReq.tagID.includes(tag))
+    }
+    if(paginatedTodoReq.tagID)
+
+
+
+    if(!user) {}
+
+    const skip: number =
+      (paginatedTodoReq.pageNumber - 1) * paginatedTodoReq.itemsPerPage;
+    const todos: ToDo[] =
+      user?.todos.slice(skip, skip + paginatedTodoReq.itemsPerPage) || [];
+    const hasNextPage: boolean =
+      (user?.todos?.length || 0) > skip + paginatedTodoReq.itemsPerPage;
+    const totalPages: number = Math.ceil(
+      (user?.tags?.length || 0) / paginatedTodoReq.itemsPerPage || 0,
+    );
+
+    return Promise.resolve([]);
   }
 }

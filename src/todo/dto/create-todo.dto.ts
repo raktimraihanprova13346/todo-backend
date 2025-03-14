@@ -9,7 +9,7 @@ export class CreateTodoDto {
   content: string;
 
   @IsNotEmpty()
-  deadLine: Date;
+  deadline: Date;
 
   @IsNotEmpty()
   tagID: number[] = [];
