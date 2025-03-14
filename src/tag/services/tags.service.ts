@@ -77,4 +77,17 @@ export class TagsService {
 
     return response;
   }
+
+  async getTagsById(ids: number[]): Promise<Tag[]> {
+    const tagList: Tag[] = [];
+    for (const id of ids) {
+      const tag: Tag | null = await this.tagRepository.findOne({
+        where: { id: id },
+      });
+      if (tag) {
+        tagList.push(tag);
+      }
+    }
+    return tagList;
+  }
 }

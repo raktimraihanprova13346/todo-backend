@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { Tag } from '../../tag/entity/tag.entity';
 import { User } from '../../user/entity/user.entity';
+import { Length } from 'class-validator';
 
 @Entity()
 export class ToDo {
@@ -36,7 +37,7 @@ export class ToDo {
   @Column()
   deadline: Date;
 
-  @Column()
+  @Column({ default: null })
   completedDate: Date;
 
   @Column({ default: false })

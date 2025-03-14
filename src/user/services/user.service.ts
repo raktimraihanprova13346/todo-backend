@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../entity/user.entity';
@@ -58,10 +59,14 @@ export class UserService {
       where: { emailAddress: signInUserDto.email },
     });
   }
-  async findUserByEmail(email: string): Promise<User | null> {
-    return this.userRepository.findOne({
+  async findUserByEmail(email: string): Promise<User> {
+    const user: User | null = await this.userRepository.findOne({
       where: { emailAddress: email },
     });
+    if (!user) {
+      throw new NotFoundException('User does not exist.');
+    }
+    return user;
   }
 
   async findTagsByPagination(
