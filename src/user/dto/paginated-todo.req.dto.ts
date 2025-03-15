@@ -10,9 +10,7 @@ export class PaginatedTodoReqDto {
   @IsEmail()
   emailAddress: string;
 
-  hasNext: boolean = false;
-
   tagID: number[] = [];
 
-  status: 'Incomplete' | 'Complete';
+  status: 'Incomplete' | 'Complete' | null = null;
 }

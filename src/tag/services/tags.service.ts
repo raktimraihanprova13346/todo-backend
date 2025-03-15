@@ -11,8 +11,8 @@ import { Tag } from '../entity/tag.entity';
 import { Repository } from 'typeorm';
 import { User } from '../../user/entity/user.entity';
 import { UserService } from '../../user/services/user.service';
-import { PaginatedTagReqDto } from '../../user/dto/paginated-tag-req.dto';
-import { PaginatedTagResponseDto } from '../../user/dto/paginated-tag-response.dto';
+import { UserEmailDto } from '../../user/dto/user-email.dto';
+import { RespMessageDto } from '../../common/resp-message.dto';
 
 @Injectable()
 export class TagsService {
@@ -22,10 +22,11 @@ export class TagsService {
     private readonly userService: UserService,
   ) {}
 
-  async createTag(createTagDto: CreateTagDto): Promise<Tag> {
-    const user: User | null = await this.userService.findUserByEmail(
-      createTagDto.emailAddress.toLowerCase(),
-    );
+  async createTag(createTagDto: CreateTagDto): Promise<RespMessageDto> {
+    const emailDto: UserEmailDto = {
+      email: createTagDto.emailAddress.toLowerCase(),
+    };
+    const user: User | null = await this.userService.findUserByEmail(emailDto);
 
     if (!user) {
       throw new NotFoundException('User does not exist. Please sign up first.');
@@ -45,37 +46,14 @@ export class TagsService {
       const tag: Tag = this.tagRepository.create();
       tag.user = user;
       tag.tagName = createTagDto.tagName;
-      return await this.tagRepository.save(tag);
+      await this.tagRepository.save(tag);
+      return {
+        message: 'Tag Added successfully.',
+      };
     } catch (e) {
       this.logger.error(e instanceof Error ? e.message : String(e));
       throw new BadRequestException('Invalid Data. Please try again.');
     }
-  }
-
-  async getPaginatedTags(paginatedTagReqDto: PaginatedTagReqDto) {
-    const user: User | null = await this.userService.findUserByEmail(
-      paginatedTagReqDto.emailAddress.toLowerCase(),
-    );
-
-    if (!user) {
-      throw new NotFoundException('User does not exist. Please sign up first.');
-    }
-
-    const { tags, hasNextPage, totalPages } =
-      await this.userService.findPaginatedTagsByUser(paginatedTagReqDto);
-
-    if (totalPages < paginatedTagReqDto.pageNumber) {
-      throw new NotFoundException('Page does not exist.');
-    }
-
-    const response: PaginatedTagResponseDto = {
-      tags: tags,
-      hasNextPage: hasNextPage,
-      page: paginatedTagReqDto.pageNumber,
-      totalPages: totalPages,
-    };
-
-    return response;
   }
 
   async getTagsById(ids: number[]): Promise<Tag[]> {
@@ -83,6 +61,7 @@ export class TagsService {
     for (const id of ids) {
       const tag: Tag | null = await this.tagRepository.findOne({
         where: { id: id },
+        relations: ['user', 'todos'],
       });
       if (tag) {
         tagList.push(tag);

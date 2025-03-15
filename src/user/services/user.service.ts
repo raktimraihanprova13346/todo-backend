@@ -17,6 +17,7 @@ import { ToDo } from '../../todo/entity/todo.entity';
 import { PaginatedTagResponseDto } from '../dto/paginated-tag-response.dto';
 import { PaginatedTodoReqDto } from '../dto/paginated-todo.req.dto';
 import { PaginatedTodoRespDto } from '../dto/paginated-todo-resp.dto';
+import { UserEmailDto } from '../dto/user-email.dto';
 
 @Injectable()
 export class UserService {
@@ -65,9 +66,9 @@ export class UserService {
     });
   }
 
-  async findUserByEmail(email: string): Promise<User> {
+  async findUserByEmail(userEmail: UserEmailDto): Promise<User> {
     const user: User | null = await this.userRepository.findOne({
-      where: { emailAddress: email },
+      where: { emailAddress: userEmail.email },
     });
     if (!user) {
       throw new NotFoundException('User does not exist.');
@@ -101,17 +102,17 @@ export class UserService {
     return paginatedTagResponseDto;
   }
 
-  async findTagsOfUser(email: string): Promise<Tag[]> {
+  async findTagsOfUser(userEmail: UserEmailDto): Promise<Tag[]> {
     const user: User | null = await this.userRepository.findOne({
-      where: { emailAddress: email },
+      where: { emailAddress: userEmail.email },
       relations: ['tags'],
     });
     return user?.tags || [];
   }
 
-  async findTodoByUser(email: string): Promise<ToDo[]> {
+  async findTodoByUser(userEmail: UserEmailDto): Promise<ToDo[]> {
     const user: User | null = await this.userRepository.findOne({
-      where: { emailAddress: email },
+      where: { emailAddress: userEmail.email },
       relations: ['todos'],
     });
     return user?.todos || [];
@@ -137,11 +138,13 @@ export class UserService {
       );
     }
 
-    if (paginatedTodoReq.tagID.length > 0) {
+    if (paginatedTodoReq.tagID) {
       filteredTodo = filteredTodo.filter((todo: ToDo) =>
-        todo.tags.every((tag: Tag) => paginatedTodoReq.tagID.includes(tag.id)),
+        todo.tags.some((tag: Tag) => paginatedTodoReq.tagID.includes(tag.id)),
       );
     }
+
+    this.logger.log(filteredTodo);
 
     const skip: number =
       (paginatedTodoReq.pageNumber - 1) * paginatedTodoReq.itemsPerPage;
@@ -158,8 +161,55 @@ export class UserService {
       hasNextPage: hasNextPage,
       totalPage: totalPages,
       page: paginatedTodoReq.pageNumber,
+      total: Number(todos.length),
     };
 
     return paginatedTodoResp;
+  }
+
+  async getPaginatedTags(paginatedTagReqDto: PaginatedTagReqDto) {
+    const user: User | null = await this.findUserByEmail({
+      email: paginatedTagReqDto.emailAddress.toLowerCase(),
+    });
+
+    if (!user) {
+      throw new NotFoundException('User does not exist. Please sign up first.');
+    }
+
+    const { tags, hasNextPage, totalPages } =
+      await this.findPaginatedTagsByUser(paginatedTagReqDto);
+
+    if (totalPages < paginatedTagReqDto.pageNumber) {
+      throw new NotFoundException('Page does not exist.');
+    }
+
+    const response: PaginatedTagResponseDto = {
+      tags: tags,
+      hasNextPage: hasNextPage,
+      page: paginatedTagReqDto.pageNumber,
+      totalPages: totalPages,
+    };
+
+    return response;
+  }
+
+  async getTagsOfUserById(userEmail: UserEmailDto, ids: number[]) {
+    const user: User | null = await this.findUserByEmail({
+      email: userEmail.email.toLowerCase(),
+    });
+
+    if (!user) {
+      throw new NotFoundException('User does not exist. Please sign up first.');
+    }
+
+    const tags: Tag[] = await this.findTagsOfUser(userEmail);
+    const tagList: Tag[] = [];
+    for (const id of ids) {
+      const tag: Tag | undefined = tags.find((tag) => tag.id === id);
+      if (tag) {
+        tagList.push(tag);
+      }
+    }
+    return tagList;
   }
 }

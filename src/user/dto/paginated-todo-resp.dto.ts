@@ -5,4 +5,5 @@ export class PaginatedTodoRespDto {
   hasNextPage: boolean;
   totalPage: number;
   page: number;
+  total: number;
 }

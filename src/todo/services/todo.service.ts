@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateTodoDto } from '../dto/create-todo.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ToDo } from '../entity/todo.entity';
@@ -10,6 +10,8 @@ import { User } from '../../user/entity/user.entity';
 import { UpdateTodoDto } from '../dto/update-todo.dto';
 import { isAfter } from 'date-fns';
 import { DeleteTodoDto } from '../dto/delete-todo.dto';
+import { UserEmailDto } from '../../user/dto/user-email.dto';
+import { RespMessageDto } from '../../common/resp-message.dto';
 
 @Injectable()
 export class TodoService {
@@ -21,13 +23,14 @@ export class TodoService {
     private readonly tagService: TagsService,
   ) {}
 
-  async createTodo(createTodoDto: CreateTodoDto) {
+  async createTodo(createTodoDto: CreateTodoDto): Promise<RespMessageDto> {
     const tagList: Tag[] = await this.tagService.getTagsById(
       createTodoDto.tagID,
     );
-    const user: User = await this.userService.findUserByEmail(
-      createTodoDto.emailAddress,
-    );
+    const emailDto: UserEmailDto = {
+      email: createTodoDto.emailAddress.toLowerCase(),
+    };
+    const user: User = await this.userService.findUserByEmail(emailDto);
 
     const todo: ToDo = this.todoRepository.create(createTodoDto);
     todo.user = user;
@@ -37,7 +40,9 @@ export class TodoService {
 
     try {
       await this.todoRepository.save(todo);
-      return 'Data Saved Successfully';
+      return {
+        message: 'Data Saved Successfully',
+      };
     } catch (e) {
       this.logger.error(e instanceof Error ? e.message : String(e));
       throw new BadRequestException('Invalid Data. Please try again.');
@@ -45,26 +50,37 @@ export class TodoService {
   }
 
   async updateTodo(updateTodoDto: UpdateTodoDto) {
-    const tagList: Tag[] = await this.tagService.getTagsById(
+    const userEmailDto: UserEmailDto = {
+      email: updateTodoDto.emailAddress,
+    };
+    const tagList: Tag[] = await this.userService.getTagsOfUserById(
+      userEmailDto,
       updateTodoDto.tagID,
     );
     if (isAfter(updateTodoDto.completedDate, updateTodoDto.deadline)) {
       updateTodoDto.overdue = true;
     }
+    const todo = await this.todoRepository.findOne({
+      where: { id: updateTodoDto.id },
+    });
+
+    if (!todo) {
+      throw new NotFoundException('ToDo item not found.');
+    }
+    todo.title = updateTodoDto.title;
+    todo.content = updateTodoDto.content;
+    todo.status = updateTodoDto.status;
+    todo.deadline = updateTodoDto.deadline;
+    todo.completedDate = updateTodoDto.completedDate;
+    todo.overDue = updateTodoDto.overdue;
+    todo.tags = tagList;
+
     try {
-      await this.todoRepository.update(
-        { id: updateTodoDto.id },
-        {
-          title: updateTodoDto.title,
-          content: updateTodoDto.content,
-          status: updateTodoDto.status,
-          deadline: updateTodoDto.deadline,
-          completedDate: updateTodoDto.completedDate,
-          tags: tagList,
-          overDue: updateTodoDto.overdue,
-        },
-      );
-      return 'Data Updated Successfully';
+      await this.todoRepository.save(todo);
+      const message: RespMessageDto = {
+        message: 'Data Updated Successfully',
+      };
+      return message;
     } catch (e) {
       this.logger.error(e instanceof Error ? e.message : String(e));
       throw new BadRequestException('Invalid Data. Please try again.');
