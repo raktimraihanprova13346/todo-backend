@@ -167,6 +167,26 @@ export class UserService {
     return paginatedTodoResp;
   }
 
+  async getTagsOfUserById(userEmail: UserEmailDto, ids: number[]) {
+    const user: User | null = await this.findUserByEmail({
+      email: userEmail.email.toLowerCase(),
+    });
+
+    if (!user) {
+      throw new NotFoundException('User does not exist. Please sign up first.');
+    }
+
+    const tags: Tag[] = await this.findTagsOfUser(userEmail);
+    const tagList: Tag[] = [];
+    for (const id of ids) {
+      const tag: Tag | undefined = tags.find((tag) => tag.id === id);
+      if (tag) {
+        tagList.push(tag);
+      }
+    }
+    return tagList;
+  }
+
   async getPaginatedTags(paginatedTagReqDto: PaginatedTagReqDto) {
     const user: User | null = await this.findUserByEmail({
       email: paginatedTagReqDto.emailAddress.toLowerCase(),
@@ -191,25 +211,5 @@ export class UserService {
     };
 
     return response;
-  }
-
-  async getTagsOfUserById(userEmail: UserEmailDto, ids: number[]) {
-    const user: User | null = await this.findUserByEmail({
-      email: userEmail.email.toLowerCase(),
-    });
-
-    if (!user) {
-      throw new NotFoundException('User does not exist. Please sign up first.');
-    }
-
-    const tags: Tag[] = await this.findTagsOfUser(userEmail);
-    const tagList: Tag[] = [];
-    for (const id of ids) {
-      const tag: Tag | undefined = tags.find((tag) => tag.id === id);
-      if (tag) {
-        tagList.push(tag);
-      }
-    }
-    return tagList;
   }
 }
