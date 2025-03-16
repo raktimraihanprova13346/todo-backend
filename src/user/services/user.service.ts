@@ -83,10 +83,16 @@ export class UserService {
       where: { emailAddress: paginatedTagDto.emailAddress },
       relations: ['tags'],
     });
+
     const skip: number =
       (paginatedTagDto.pageNumber - 1) * paginatedTagDto.itemsPerPage;
     const tags: Tag[] =
-      result?.tags.slice(skip, skip + paginatedTagDto.itemsPerPage) || [];
+      result?.tags
+        .sort(
+          (a, b) =>
+            new Date(b.updateDate).getTime() - new Date(a.updateDate).getTime(),
+        )
+        .slice(skip, skip + paginatedTagDto.itemsPerPage) || [];
     const hasNextPage: boolean =
       (result?.tags?.length || 0) > skip + paginatedTagDto.itemsPerPage;
     const totalPages: number = Math.ceil(
