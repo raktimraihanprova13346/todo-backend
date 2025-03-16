@@ -132,19 +132,21 @@ export class UserService {
 
     let filteredTodo: ToDo[] = user.todos || [];
 
-    if (paginatedTodoReq.status) {
+    if (paginatedTodoReq.status !== null) {
       filteredTodo = filteredTodo.filter(
         (todo) => todo.status === paginatedTodoReq.status,
       );
     }
 
-    if (paginatedTodoReq.tagID) {
+    filteredTodo = filteredTodo.sort((a, b) => {
+      return a.deadline < b.deadline ? 1 : -1;
+    });
+
+    if (paginatedTodoReq.tagID.length > 0) {
       filteredTodo = filteredTodo.filter((todo: ToDo) =>
         todo.tags.some((tag: Tag) => paginatedTodoReq.tagID.includes(tag.id)),
       );
     }
-
-    this.logger.log(filteredTodo);
 
     const skip: number =
       (paginatedTodoReq.pageNumber - 1) * paginatedTodoReq.itemsPerPage;

@@ -6,7 +6,6 @@ export class PaginatedTodoReqDto {
   @IsNotEmpty()
   itemsPerPage: number;
 
-  @IsNotEmpty()
   @IsEmail()
   emailAddress: string;
 
