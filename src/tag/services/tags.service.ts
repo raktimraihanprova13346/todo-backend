@@ -13,6 +13,7 @@ import { User } from '../../user/entity/user.entity';
 import { UserService } from '../../user/services/user.service';
 import { UserEmailDto } from '../../user/dto/user-email.dto';
 import { RespMessageDto } from '../../common/resp-message.dto';
+import { UpdateTagDto } from '../dto/updateTag';
 
 @Injectable()
 export class TagsService {
@@ -68,5 +69,32 @@ export class TagsService {
       }
     }
     return tagList;
+  }
+
+  async deleteTag(id: number) {
+    try {
+      await this.tagRepository.delete({ id: id });
+      return 'Tag Deleted Successfully';
+    } catch (e) {
+      this.logger.error(e instanceof Error ? e.message : String(e));
+      throw new BadRequestException(
+        'Delete operation is not succeeded. Please try again.',
+      );
+    }
+  }
+
+  async updateTag(updateTagDto: UpdateTagDto) {
+    try {
+      await this.tagRepository.update(
+        { id: updateTagDto.id },
+        { tagName: updateTagDto.content },
+      );
+      return 'Tag Updated Successfully';
+    } catch (e) {
+      this.logger.error(e instanceof Error ? e.message : String(e));
+      throw new BadRequestException(
+        'Update operation is not succeeded. Please try again.',
+      );
+    }
   }
 }

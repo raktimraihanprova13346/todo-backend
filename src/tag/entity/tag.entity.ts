@@ -29,6 +29,6 @@ export class Tag {
   @ManyToOne(() => User, (user) => user.tags, { onDelete: 'CASCADE' })
   user: User;
 
-  @ManyToMany(() => ToDo, (todo) => todo.tags)
+  @ManyToMany(() => ToDo, (todo) => todo.tags, { onDelete: 'CASCADE' })
   todos: ToDo[];
 }
